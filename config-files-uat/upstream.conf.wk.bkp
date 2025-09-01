@@ -1,0 +1,8 @@
+upstream smtp {
+        least_conn;
+        server 10.16.34.177:25;
+        server 10.16.33.177:25;
+        server 10.16.33.178:25;
+        server 10.16.33.179:25;
+        server 10.1.33.110:25;
+}

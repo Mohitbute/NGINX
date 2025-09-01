@@ -1,0 +1,112 @@
+ server {
+ listen 443 ssl;
+        server_name loans.cp.centralbank.co.in;
+        keepalive_timeout 100;
+        ssl_certificate /usr/local/nginx/certs/centralserver_bundle.crt;
+        ssl_certificate_key /usr/local/nginx/certs/centralserver.key;
+        ssl_protocols TLSv1.2;
+        ssl_prefer_server_ciphers on;
+        ssl_ciphers "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-CCM8:DHE-RSA-AES256-CCM:DHE-RSA-AES128-CCM8:DHE-RSA-AES128-CCM:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384";
+        server_tokens off;
+        add_header Allow "GET, POST, PUT, HEAD, OPTIONS, PATCH" always;
+	add_header X-Frame-Options "DENY";
+        client_max_body_size 30m;
+	underscores_in_headers on;
+
+        access_log /var/log/nginx/loans_access.log;
+        error_log /var/log/nginx/loans_error.log;
+
+        error_page 502 404 403 503 500 501 /50x.html;
+        location = /50x.html {
+                root /var/www/error;
+                internal;}
+
+location /api/ {
+                proxy_pass https://kong-api-gateway-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in/api/;
+                #---# Added as per the request by GoFlo #---#
+                #---# Setting 600 seconds after applying timeout on routes original was 1800 ###---###
+		proxy_read_timeout 600;
+		proxy_connect_timeout 600;
+		proxy_send_timeout 600;
+		send_timeout 600;
+		#---# Added as per the request by GoFlo #---#
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+		add_header Cache-Control "private, no-store";
+                add_header X-Content-Type-Options nosniff;
+                default_type text/plain;
+                add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+                add_header X-XSS-Protection "1; mode=block";
+                proxy_set_header Host kong-api-gateway-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           }
+
+location /ui/ {
+                proxy_pass https://cdn-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in/ui/;
+                proxy_read_timeout 300;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+		add_header Cache-Control "private, no-store";
+                add_header X-Content-Type-Options nosniff;
+                default_type text/plain;
+                add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+                add_header X-XSS-Protection "1; mode=block";
+                proxy_set_header Host cdn-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+           }
+
+location /sec/ {
+                proxy_pass https://encryptor-app-route-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in/sec/;
+                proxy_read_timeout 300;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+		add_header Cache-Control "private, no-store";
+                add_header X-Content-Type-Options nosniff;
+                default_type text/plain;
+                add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+                add_header X-XSS-Protection "1; mode=block";
+                proxy_set_header Host encryptor-app-route-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+           }
+
+location /portal/ {
+               #deny all;
+		proxy_pass https://portal-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in/portal/;
+                #proxy_redirect https://portal-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in/portal/ /portal/;
+		proxy_read_timeout 300;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+		add_header Cache-Control "private, no-store";
+		add_header X-Content-Type-Options nosniff;
+		default_type text/plain;
+		add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
+		add_header X-XSS-Protection "1; mode=block";
+                proxy_set_header Host portal-cbidlpmicrosystem.apps.neomzdr.cp.centralbank.co.in;
+                proxy_cache_bypass $http_upgrade;
+                proxy_set_header X-Real-IP $remote_addr;
+           }
+
+location /portal/PAPL {
+                return 301 https://loans.cp.centralbank.co.in/portal/?instId=9610&appType=INDEPENDENT&tag=SELF_SERVE&product=PL&language=en#/selfserve/journey;
+	   }
+
+location /portal/Mudra {
+                return 301 https://loans.cp.centralbank.co.in/portal/?instId=9610&appType=INDEPENDENT&tag=SELF_SERVE&product=BL&language=en#/selfserve/journey;
+           }
+		   
+location /portal/AGL {
+                return 301 https://loans.cp.centralbank.co.in/portal/?instId=9610&appType=INDEPENDENT&tag=SELF_SERVE&product=AGL&language=en#/selfserve/journey;
+           }
+		   
+location /portal/RGL {
+                return 301 https://loans.cp.centralbank.co.in/portal/?instId=9610&appType=INDEPENDENT&tag=SELF_SERVE&product=GL&language=en#/selfserve/journey;
+           }
+}
